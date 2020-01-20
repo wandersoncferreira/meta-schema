@@ -53,7 +53,15 @@ Example of specification provided to the library at runtime.
                                                               :optional? false}}}]}})
 
   (def my-parser (ms/create-parser file-spec))
-  (s/valid? my-parser my-data)
+
+  (def my-data-1 {:zip ["my zipcode is text"]
+                  :rent 10
+                  :university {:departments [{:zip {:address "deep structures"}}]}})
+  (s/valid? my-parser my-data-1) => true
+
+  (s/valid? my-parser {:zip [{:house-price 230} "either or both here.."]
+                       :rent 10
+                       :university {:departments [{:zip {:address "deep structures"}}]}}) => true
 
 ```
 

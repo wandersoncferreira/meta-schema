@@ -22,18 +22,3 @@
                           :amount 20}))
     (is (not (s/valid? parser {:cep 10
                                :amount 20})))))
-
-(def file-spec {:spec-name :my-project.client/payload
-                :zip [{:spec :zipcode
-                       :optional? false
-                       :nullable? false}
-
-                      {:house-price {:spec :money
-                                     :nullable? true}}]
-
-                :rent {:spec :money
-                       :optional? false
-                       :nullable? false}
-
-                :university {:departments [{:zip {:address {:spec :zipcode
-                                                            :optional? false}}}]}})
