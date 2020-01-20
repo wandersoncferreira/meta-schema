@@ -1,9 +1,7 @@
 (ns meta-schema.core
-  (:require [clojure.spec.alpha :as s]
-            [spec-tools.data-spec :as ds]
+  (:require [clojure.edn :as edn]
             [clojure.string :as cstr]
-            [clojure.java.io :as io]
-            [clojure.edn :as edn]))
+            [spec-tools.data-spec :as ds]))
 
 (defn- load-specs [filename]
   (let [single-spec (->> filename
@@ -15,17 +13,18 @@
 
 (def available-specs (atom {}))
 
-(defn setup! [resource-folder]
-  "Provide the folder where all your specs are registered."
-  (let [definitions (->> resource-folder
-                         (io/resource)
-                         (io/file)
-                         (file-seq)
+(defn setup! [files]
+  "Perform the configuration of your pre-defined specs.
+
+  :files   a list of java.io.File objects with the definitions
+of your pre-defined specs. You should follow the specified documentation
+about the content type of this files e.g. required keys `:intent` and
+`:location`."
+  (let [definitions (->> files
                          (filter #(.isFile %))
                          (map load-specs)
                          (into {}))]
     (swap! available-specs conj definitions)))
-
 
 
 (defn- spec-name--or-clause [field-name spec-name]
@@ -76,6 +75,7 @@
 (defn create-parser [map-spec]
   (if (empty? @available-specs)
     (throw (ex-info "You need to setup! your spec definitions first!" {}))
-    (let [spec-gen (traverse-file-spec map-spec)]
-      (ds/spec {:name ::payload
+    (let [spec-name (:spec-name map-spec)
+          spec-gen (traverse-file-spec (dissoc map-spec :spec-name))]
+      (ds/spec {:name spec-name
                 :spec spec-gen}))))

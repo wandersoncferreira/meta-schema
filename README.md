@@ -34,24 +34,20 @@ Example of specification provided to the library at runtime.
 
   (ms/setup! "my-specs")
 
-  (def file-spec {:valores [{:spec :cnpj
-                             :optional? false
-                             :nullable? false}
-                            {:treta {:spec :letras
-                                     :nullable? true}
-                             :total {:spec :numero
-                                     :optional? true}}]
+  (def file-spec {:spec-name :my-project.client/payload
+                :zip [{:spec :zipcode
+                       :optional? false
+                       :nullable? false}
 
-                  :celular {:spec :cnpj
-                            :optional? true
-                            :nullable? true}
+                      {:house-price {:spec :money
+                                     :nullable? true}}]
 
-                  :bairro {:numero [{:letreiro {:agora {:spec :letras
-                                                        :optional? true}}}]
-                           :federal {:spec :cnpj
-                                     :optional? false}}
-                  :casa {:spec :numero
-                         :optional? true}})
+                :rent {:spec :money
+                       :optional? false
+                       :nullable? false}
+
+                :university {:departments [{:zip {:address {:spec :zipcode
+                                                            :optional? false}}}]}})
 
   (def my-parser (ms/create-parser file-spec))
   (s/valid? my-parser my-data)
