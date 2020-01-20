@@ -57,13 +57,31 @@ Example of specification provided to the library at runtime.
   (def my-data-1 {:zip ["my zipcode is text"]
                   :rent 10
                   :university {:departments [{:zip {:address "deep structures"}}]}})
-  (s/valid? my-parser my-data-1) => true
+
+  (s/valid? my-parser my-data-1) ;; => true
 
   (s/valid? my-parser {:zip [{:house-price 230} "either or both here.."]
                        :rent 10
-                       :university {:departments [{:zip {:address "deep structures"}}]}}) => true
+                       :university {:departments [{:zip {:address "deep structures"}}]}}) ;; => true
 
 ```
+
+## Rational
+
+The DSL is simple:
+
+1. When the field is a list, more than one spec inside it will produce a `or` operator
+2. When the field is `optional`, it means that  may or may not be present at coersion time
+3. When the field is `nullable`, it means that `nil` is a valid input.
+4. By default all the fields are *not* nullable and *not* optionals.
+5. You can nest the options as you desired
+
+
+## TODO list
+
+- [ ] Improve interfaces of public API
+- [ ] Write a parser to spec the DSL in the input-file
+- [ ] Provide support for `sets` and `enums` (?)
 
 ## License
 
