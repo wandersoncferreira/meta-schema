@@ -1,10 +1,25 @@
 # meta-schema
 
-Library designed to help with data processing using `clojure.spec`.
+[![Clojars Project](https://img.shields.io/clojars/v/meta-schema.svg)](https://clojars.org/meta-schema)
 
-The idea is to provide an user the ability to combine
-several pre-coded `clojure.spec` into some specific shape at
-*runtime*.
+
+Designed to help data processing using `clojure.spec`.
+
+Provide users the ability to combine several pre-defined
+`clojure.spec` into some specific shape at *runtime*.
+
+
+For now, it only supports JSON files.
+
+## Installation
+
+```clj
+Leiningen/Boot
+[meta-schema "0.1.0-SNAPSHOT"]
+
+Clojure CLI/deps.edn
+meta-schema {:mvn/version "0.1.0-SNAPSHOT"}
+```
 
 
 ## Usage
@@ -82,6 +97,7 @@ The DSL is simple:
 - [ ] Improve interfaces of public API
 - [ ] Write a parser to spec the DSL in the input-file
 - [ ] Provide support for `sets` and `enums` (?)
+- [ ] Extend it to XML
 
 ## License
 
