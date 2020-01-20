@@ -17,6 +17,7 @@
   (let [file-spec {:spec-name :meta-schema.core-test/testing
                    :cep {:spec :zipcode}
                    :amount {:spec :money}}
+
         parser (ms/create-parser file-spec)]
     (is (s/valid? parser {:cep "brazilian cep"
                           :amount 20}))

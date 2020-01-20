@@ -9,3 +9,9 @@
 (s/def ::options (s/keys :req-un [::spec]
                          :opt-un [::optional?
                                   ::nullable?]))
+
+
+(s/def ::location qualified-keyword?)(s/def ::intent string?)
+
+(s/def ::setup-file (s/keys :req-un [::location]
+                            :opt-un [::intent]))
