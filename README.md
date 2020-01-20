@@ -9,10 +9,10 @@ several pre-coded `clojure.spec` into some specific shape at
 
 ## Usage
 
-In your project you need to define EDN files inside your
-resource folder and provide the name of this folder in
-`(setup! ..)`. These files should be simple and describe the
-location and intent of your pre-defined specs.
+In your project you need to define EDN files inside a folder
+and provide a list of `java.io.File`s to the `(setup!  ..)`
+function. These files are simple and provides the location
+and intent of your pre-defined specs.
 
 ```clj
 {:zipcode {:intent "Validation to ZipCodes in Brazil"
@@ -31,8 +31,11 @@ Example of specification provided to the library at runtime.
 ```clj
   (require '[meta-schema.core :as ms])
   (require '[clojure.alpha.spec :as s])
+  (require '[clojure.java.io :as io])
 
-  (ms/setup! "my-specs")
+  (ms/setup! (-> (io/resources "specs")
+                 (io/file)
+                 (file-seq)))
 
   (def file-spec {:spec-name :my-project.client/payload
                   :zip [{:spec :zipcode
