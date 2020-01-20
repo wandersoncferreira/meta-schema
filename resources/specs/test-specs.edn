@@ -1,0 +1,5 @@
+{:zipcode {:intent "Validation to ZipCodes in Brazil"
+           :location :meta-schema.core-test/zipcode}
+ :money {:intent "How we understand money around here? Anything >= 0 either long, float, double, or decimal"
+         :location :meta-schema.core-test/money}
+ }

@@ -5,14 +5,13 @@
             [clojure.java.io :as io]
             [clojure.edn :as edn]))
 
-(s/def ::cnpj int?)
-(s/def ::numero int?)
-(s/def ::letras string?)
-
 (defn- load-specs [filename]
-  (->> filename
-       slurp
-       edn/read-string))
+  (let [single-spec (->> filename
+                         slurp
+                         edn/read-string)]
+    (->> (for [k (keys single-spec)]
+           (hash-map k (get-in single-spec [k :location])))
+         (into {}))))
 
 (def available-specs (atom {}))
 
@@ -80,40 +79,3 @@
     (let [spec-gen (traverse-file-spec map-spec)]
       (ds/spec {:name ::payload
                 :spec spec-gen}))))
-
-(comment
-
-  (def file-spec {:valores [{:spec :cnpj
-                             :optional? false
-                             :nullable? false}
-                            {:treta {:spec :letras
-                                     :nullable? true}
-                             :total {:spec :numero
-                                     :optional? true}}]
-
-                  :celular {:spec :cnpj
-                            :optional? true
-                            :nullable? true}
-
-                  :bairro {:numero [{:letreiro {:agora {:spec :letras
-                                                        :optional? true}}}]
-                           :federal {:spec :cnpj
-                                     :optional? false}}
-                  :casa {:spec :numero
-                         :optional? true}})
-
-  (setup! "specs/teste.edn")
-  (def teste-spec (create-parser file-spec))
-
-  (def payload-spec
-    (ds/spec
-     {:name ::payload
-      :spec (traverse-file-spec file-spec)}))
-
-
-  (s/valid? payload-spec {:valores [{:treta nil}]
-                          :celular 20
-                          :bairro {:numero [{:letreiro {:agora "1312"}}]
-                                   :federal 30}
-                          :casa 30})
-  )
