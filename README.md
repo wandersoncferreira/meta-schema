@@ -7,18 +7,32 @@ several pre-coded `clojure.spec` into some specific shape at
 *runtime*.
 
 
-
 ## Usage
 
-```clj
-(s/def ::cnpj int?)
-  (s/def ::numero-casa int?)
-  (s/def ::letras string?)
+In your project you need to define EDN files inside your
+resource folder and provide the name of this folder in
+`(setup! ..)`. These files should be simple and describe the
+location and intent of your pre-defined specs.
 
-  (def available-specs
-    {:cnpj ::cnpj
-     :numero ::numero-casa
-     :letras ::letras})
+```clj
+{:zipcode {:intent "Validation to ZipCodes in Brazil"
+           :location :my-project.spec/zipcode-br}
+ :money {:intent "How we understand money around here? Anything >= 0 either long, float, double, or decimal"
+         :location :my-project.other-spec/money-br}
+}
+```
+
+Make sure that all this namespaces are loaded before invoke
+`meta-schema.core/setup!`.
+
+
+Example of specification provided to the library at runtime.
+
+```clj
+  (require '[meta-schema.core :as ms])
+  (require '[clojure.alpha.spec :as s])
+
+  (ms/setup! "my-specs")
 
   (def file-spec {:valores [{:spec :cnpj
                              :optional? false
@@ -39,17 +53,9 @@ several pre-coded `clojure.spec` into some specific shape at
                   :casa {:spec :numero
                          :optional? true}})
 
-  (def payload-spec
-    (ds/spec
-     {:name ::payload
-      :spec (prepare-parser file-spec)}))
+  (def my-parser (ms/create-parser file-spec))
+  (s/valid? my-parser my-data)
 
-
-  (s/valid? payload-spec {:valores [{:treta nil}]
-                          :celular 20
-                          :bairro {:numero [{:letreiro {:agora "1312"}}]
-                                   :federal 30}
-                          :casa 30})
 ```
 
 ## License

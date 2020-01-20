@@ -1,7 +1,33 @@
 (ns meta-schema.core
   (:require [clojure.spec.alpha :as s]
-            [spec-tools.core :as ds]
-            [clojure.string :as cstr]))
+            [spec-tools.data-spec :as ds]
+            [clojure.string :as cstr]
+            [clojure.java.io :as io]
+            [clojure.edn :as edn]))
+
+(s/def ::cnpj int?)
+(s/def ::numero int?)
+(s/def ::letras string?)
+
+(defn- load-specs [filename]
+  (->> filename
+       slurp
+       edn/read-string))
+
+(def available-specs (atom {}))
+
+(defn setup! [resource-folder]
+  "Provide the folder where all your specs are registered."
+  (let [definitions (->> resource-folder
+                         (io/resource)
+                         (io/file)
+                         (file-seq)
+                         (filter #(.isFile %))
+                         (map load-specs)
+                         (into {}))]
+    (swap! available-specs conj definitions)))
+
+
 
 (defn- spec-name--or-clause [field-name spec-name]
   (let [fname (name field-name)
@@ -13,7 +39,7 @@
        (map name)
        (cstr/join "-")))
 
-(defn prepare-parser
+(defn- traverse-file-spec
   ([spec]
    (let [fkeys (keys spec)]
      (loop [k fkeys
@@ -30,34 +56,32 @@
                                   (cond
                                     (:spec node)
                                     (if (:nullable? node)
-                                      (ds/maybe (get available-specs (:spec node)))
-                                      (get available-specs (:spec node)))
+                                      (ds/maybe (get @available-specs (:spec node)))
+                                      (get @available-specs (:spec node)))
 
                                     (and (vector? node) (:spec (first node)))
                                     (if (> (count node) 1)
                                       [(ds/or
                                         (->> (for [n node]
                                                (if (:spec n)
-                                                 (hash-map (spec-name--or-clause field-name (:spec n)) (get available-specs (:spec n)))
-                                                 (hash-map (spec-name--or-clause field-name (spec-name--map-in-vector n)) (prepare-parser n))))
+                                                 (hash-map (spec-name--or-clause field-name (:spec n)) (get @available-specs (:spec n)))
+                                                 (hash-map (spec-name--or-clause field-name (spec-name--map-in-vector n)) (traverse-file-spec n))))
                                              (into {})))]
-                                      [(get available-specs (:spec (first node)))])
+                                      [(get @available-specs (:spec (first node)))])
 
                                     (and (vector? node) (nil? (:spec (first node))))
-                                    [(prepare-parser (first node))]
+                                    [(traverse-file-spec (first node))]
 
-                                    :else (prepare-parser node)))))))))))
+                                    :else (traverse-file-spec node)))))))))))
+
+(defn create-parser [map-spec]
+  (if (empty? @available-specs)
+    (throw (ex-info "You need to setup! your spec definitions first!" {}))
+    (let [spec-gen (traverse-file-spec map-spec)]
+      (ds/spec {:name ::payload
+                :spec spec-gen}))))
 
 (comment
-
-  (s/def ::cnpj int?)
-  (s/def ::numero-casa int?)
-  (s/def ::letras string?)
-
-  (def available-specs
-    {:cnpj ::cnpj
-     :numero ::numero-casa
-     :letras ::letras})
 
   (def file-spec {:valores [{:spec :cnpj
                              :optional? false
@@ -78,14 +102,18 @@
                   :casa {:spec :numero
                          :optional? true}})
 
+  (setup! "specs/teste.edn")
+  (def teste-spec (create-parser file-spec))
+
   (def payload-spec
     (ds/spec
      {:name ::payload
-      :spec (prepare-parser file-spec)}))
+      :spec (traverse-file-spec file-spec)}))
 
 
   (s/valid? payload-spec {:valores [{:treta nil}]
                           :celular 20
                           :bairro {:numero [{:letreiro {:agora "1312"}}]
                                    :federal 30}
-                          :casa 30}))
+                          :casa 30})
+  )
