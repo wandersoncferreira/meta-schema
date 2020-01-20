@@ -2,9 +2,55 @@
 
 Library designed to help with data processing using `clojure.spec`.
 
+The idea is to provide an user the ability to combine
+several pre-coded `clojure.spec` into some specific shape at
+*runtime*.
+
+
 
 ## Usage
 
+```
+(s/def ::cnpj int?)
+  (s/def ::numero-casa int?)
+  (s/def ::letras string?)
+
+  (def available-specs
+    {:cnpj ::cnpj
+     :numero ::numero-casa
+     :letras ::letras})
+
+  (def file-spec {:valores [{:spec :cnpj
+                             :optional? false
+                             :nullable? false}
+                            {:treta {:spec :letras
+                                     :nullable? true}
+                             :total {:spec :numero
+                                     :optional? true}}]
+
+                  :celular {:spec :cnpj
+                            :optional? true
+                            :nullable? true}
+
+                  :bairro {:numero [{:letreiro {:agora {:spec :letras
+                                                        :optional? true}}}]
+                           :federal {:spec :cnpj
+                                     :optional? false}}
+                  :casa {:spec :numero
+                         :optional? true}})
+
+  (def payload-spec
+    (ds/spec
+     {:name ::payload
+      :spec (prepare-parser file-spec)}))
+
+
+  (s/valid? payload-spec {:valores [{:treta nil}]
+                          :celular 20
+                          :bairro {:numero [{:letreiro {:agora "1312"}}]
+                                   :federal 30}
+                          :casa 30})
+```
 
 ## License
 

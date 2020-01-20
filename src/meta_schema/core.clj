@@ -3,15 +3,6 @@
             [spec-tools.core :as ds]
             [clojure.string :as cstr]))
 
-(s/def ::cnpj int?)
-(s/def ::numero-casa int?)
-(s/def ::letras string?)
-
-(def available-specs
-  {:cnpj ::cnpj
-   :numero ::numero-casa
-   :letras ::letras})
-
 (defn- spec-name--or-clause [field-name spec-name]
   (let [fname (name field-name)
         sname (name spec-name)]
@@ -58,6 +49,15 @@
                                     :else (prepare-parser node)))))))))))
 
 (comment
+
+  (s/def ::cnpj int?)
+  (s/def ::numero-casa int?)
+  (s/def ::letras string?)
+
+  (def available-specs
+    {:cnpj ::cnpj
+     :numero ::numero-casa
+     :letras ::letras})
 
   (def file-spec {:valores [{:spec :cnpj
                              :optional? false
