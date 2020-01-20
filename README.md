@@ -10,7 +10,7 @@ several pre-coded `clojure.spec` into some specific shape at
 
 ## Usage
 
-```
+```clj
 (s/def ::cnpj int?)
   (s/def ::numero-casa int?)
   (s/def ::letras string?)
