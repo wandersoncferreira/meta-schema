@@ -54,6 +54,20 @@
     (is (not (s/valid? parser {:cep 10
                                :amount 20})))))
 
+(deftest failing-specs
+  (ms/setup! (-> (io/resource "specs")
+                 (io/file)
+                 (file-seq)))
+  (let [file-spec {:spec-name :meta-schema.core-test/test-fail
+                   :cep {:spec :zipcode}
+                   :address {:cep {:spec :zipcode}}
+                   :money {:spec :money}}
+        parser (ms/create-parser file-spec)]
+
+    (is (not (s/valid? parser {:cep "br"
+                               :address {:cep 10.0}
+                               :money 20})))))
+
 
 (defspec cannot-break-to-nested-fns 400
   (prop/for-all [file-spec spec-file-gen]
