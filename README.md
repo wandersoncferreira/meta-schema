@@ -13,14 +13,16 @@ For now, it only supports JSON files.
 
 ## Installation
 
-```clj
 Leiningen/Boot
-[meta-schema "0.1.0-SNAPSHOT"]
 
-Clojure CLI/deps.edn
-meta-schema {:mvn/version "0.1.0-SNAPSHOT"}
+```clj
+[meta-schema "0.1.1"]
 ```
 
+Clojure CLI/deps.edn
+```clj
+meta-schema {:mvn/version "0.1.1"}
+```
 
 ## Usage
 
