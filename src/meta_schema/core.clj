@@ -3,7 +3,9 @@
             [clojure.string :as cstr]
             [spec-tools.data-spec :as ds]
             [meta-schema.dsl :refer :all :as dsl]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [clojure.walk :as walk]
+            [clojure.java.io :as io]))
 
 (def available-specs
   "All the available specs loaded by the system through the `setup!` function."
@@ -47,6 +49,8 @@ about the content type of this files e.g. required keys `:intent` and
        (map name)
        (cstr/join "-")))
 
+(def pre-targets (atom {}))
+
 (defn- traverse-file-spec
   ([spec]
    (loop [k (keys spec)
@@ -63,20 +67,24 @@ about the content type of this files e.g. required keys `:intent` and
                                 (cond
                                   ;; first level, already has a :spec keyword defining the data coercion
                                   (:spec node)
-                                  (if (:nullable? node)
-                                    (ds/maybe (get @available-specs (:spec node)))
-                                    (get @available-specs (:spec node)))
+                                  (do
+                                    (swap! pre-targets assoc field-name (:dest node))
+                                    (if (:nullable? node)
+                                      (ds/maybe (get @available-specs (:spec node)))
+                                      (get @available-specs (:spec node))))
 
                                   ;; second level, we get a vector with a map containing :spec inside it.
                                   (and (vector? node) (:spec (first node)))
-                                  (if (> (count node) 1)
-                                    [(ds/or
-                                      (->> (for [n node]
-                                             (if (:spec n)
-                                               (hash-map (spec-name--or-clause field-name (:spec n)) (get @available-specs (:spec n)))
-                                               (hash-map (spec-name--or-clause field-name (spec-name--map-in-vector n)) (traverse-file-spec n))))
-                                           (into {})))]
-                                    [(get @available-specs (:spec (first node)))])
+                                  (do
+                                    (swap! pre-targets assoc field-name (:dest (first node)))
+                                    (if (> (count node) 1)
+                                      [(ds/or
+                                        (->> (for [n node]
+                                               (if (:spec n)
+                                                 (hash-map (spec-name--or-clause field-name (:spec n)) (get @available-specs (:spec n)))
+                                                 (hash-map (spec-name--or-clause field-name (spec-name--map-in-vector n)) (traverse-file-spec n))))
+                                             (into {})))]
+                                      [(get @available-specs (:spec (first node)))]))
 
                                   ;; third level, we get a vector with a new nested map inside, so call it again.
                                   (and (vector? node) (nil? (:spec (first node))))
@@ -92,3 +100,50 @@ about the content type of this files e.g. required keys `:intent` and
           spec-gen (traverse-file-spec (dissoc map-spec :spec-name))]
       (ds/spec {:name spec-name
                 :spec spec-gen}))))
+
+(defn find-key [data ks]
+  (clojure.walk/walk (fn [[k v]]
+                       (if (contains? (set ks) k)
+                         [k v]
+                         (when (map? v)
+                           (find-key v ks)))) identity data))
+
+(defn conv->target [data target]
+  (if (empty? @pre-targets)
+    (throw (ex-info "You need to create a parser first" {}))
+    (-> @pre-targets
+        (walk/postwalk-replace data)
+        (find-key (vals @pre-targets))
+        (walk/postwalk-replace target))))
+
+(comment
+
+  (require '[clojure.java.io :as io])
+  ;; TODO: Remover o atom de pre-targets do codigo e gerar essa variavel de outra forma
+  ;; TODO: processo de post-walk está correto, porém vale a pena explorar edge cases com nomes duplicados e etc...
+
+  (def spec-escrita-por-PO {:spec-name ::testando
+                            :valor {:spec :teste
+                                    :dest :v}
+                            :vals [{:spec :teste
+                                    :dest :l}]
+                            :valsb {:life {:casa {:spec :teste
+                                                  :dest :x}}}})
+
+  (def data-original {:valor 20
+                      :vals [20 30 40 50]
+                      :valsb {:life {:casa 99}}})
+
+  (def target-fmt-conhecido {:new-val :v
+                             :new-casa :x
+                             :new-vals :l
+                             :wand {:trying {:to [:code :x]}}
+                             :new {:new-in :v}})
+
+  (setup! (-> (io/resource "specs")
+              (io/file)
+              (file-seq)))
+  (create-parser spec-escrita-por-PO)
+  (conv->target data-original target-fmt-conhecido)
+
+  )
