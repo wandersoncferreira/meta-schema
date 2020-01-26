@@ -18,12 +18,12 @@ although the Public API **must** not change.
 Leiningen/Boot
 
 ```clj
-[meta-schema "0.1.3"]
+[meta-schema "0.1.4"]
 ```
 
 Clojure CLI/deps.edn
 ```clj
-meta-schema {:mvn/version "0.1.3"}
+meta-schema {:mvn/version "0.1.4"}
 ```
 
 ## Usage
@@ -110,12 +110,16 @@ Cool, now we can finally finish the example above. Let's say your source code on
               (io/file)
               (file-seq)))
 
-  (input-data>target-data client-data client-spec target-fmt)
+  (input-data->target-data client-data client-spec target-fmt)
 
   ;; => {:my-internal-zipcode ["101030-201" "987621-281"],
   ;;     :my-internal-value 980.322,
   ;;     :my-internal-address "University at Medium Inc.,"}
 ```
+
+The clojure.spec to validate the data is created at runtime
+and applied to the provided data. If it passes, we start the
+transformation to the `target-shape` specified.
 
 ## Rationale
 

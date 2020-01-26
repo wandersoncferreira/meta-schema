@@ -1,4 +1,4 @@
-(defproject meta-schema "0.1.3"
+(defproject meta-schema "0.1.4"
   :description "DSL to write data processing schemas faster"
   :url "https://github.com/wandersoncferreira/meta-schema"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"

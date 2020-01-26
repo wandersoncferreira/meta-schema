@@ -113,7 +113,7 @@ about the content type of this files e.g. required keys `:intent` and
     (find-key data ks matched-keys)))
 
 
-(defn input-data>target-data
+(defn input-data->target-data
   "Convert an input json file to an output json file based on specifications.
 
   :data           INPUT data
@@ -186,6 +186,6 @@ about the content type of this files e.g. required keys `:intent` and
               (io/file)
               (file-seq)))
 
-  (input-data>target-data client-data client-spec target-fmt)
+  (input-data->target-data client-data client-spec target-fmt)
 
   )
