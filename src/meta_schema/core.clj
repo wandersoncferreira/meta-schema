@@ -3,7 +3,9 @@
             [clojure.string :as cstr]
             [spec-tools.data-spec :as ds]
             [meta-schema.dsl :refer :all :as dsl]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [clojure.walk :as walk]
+            [clojure.java.io :as io]))
 
 (def available-specs
   "All the available specs loaded by the system through the `setup!` function."
@@ -47,6 +49,8 @@ about the content type of this files e.g. required keys `:intent` and
        (map name)
        (cstr/join "-")))
 
+(def pre-targets (atom {}))
+
 (defn- traverse-file-spec
   ([spec]
    (loop [k (keys spec)
@@ -63,20 +67,24 @@ about the content type of this files e.g. required keys `:intent` and
                                 (cond
                                   ;; first level, already has a :spec keyword defining the data coercion
                                   (:spec node)
-                                  (if (:nullable? node)
-                                    (ds/maybe (get @available-specs (:spec node)))
-                                    (get @available-specs (:spec node)))
+                                  (do
+                                    (swap! pre-targets assoc field-name (:destination node))
+                                    (if (:nullable? node)
+                                      (ds/maybe (get @available-specs (:spec node)))
+                                      (get @available-specs (:spec node))))
 
                                   ;; second level, we get a vector with a map containing :spec inside it.
                                   (and (vector? node) (:spec (first node)))
-                                  (if (> (count node) 1)
-                                    [(ds/or
-                                      (->> (for [n node]
-                                             (if (:spec n)
-                                               (hash-map (spec-name--or-clause field-name (:spec n)) (get @available-specs (:spec n)))
-                                               (hash-map (spec-name--or-clause field-name (spec-name--map-in-vector n)) (traverse-file-spec n))))
-                                           (into {})))]
-                                    [(get @available-specs (:spec (first node)))])
+                                  (do
+                                    (swap! pre-targets assoc field-name (:destination (first node)))
+                                    (if (> (count node) 1)
+                                      [(ds/or
+                                        (->> (for [n node]
+                                               (if (:spec n)
+                                                 (hash-map (spec-name--or-clause field-name (:spec n)) (get @available-specs (:spec n)))
+                                                 (hash-map (spec-name--or-clause field-name (spec-name--map-in-vector n)) (traverse-file-spec n))))
+                                             (into {})))]
+                                      [(get @available-specs (:spec (first node)))]))
 
                                   ;; third level, we get a vector with a new nested map inside, so call it again.
                                   (and (vector? node) (nil? (:spec (first node))))
@@ -92,3 +100,92 @@ about the content type of this files e.g. required keys `:intent` and
           spec-gen (traverse-file-spec (dissoc map-spec :spec-name))]
       (ds/spec {:name spec-name
                 :spec spec-gen}))))
+
+(defn- find-key [data ks matched-keys]
+  (walk/walk (fn [[k v]]
+               (cond
+                 (and (contains? (set ks) k) (not (contains? (set @matched-keys) k))) (do (swap! matched-keys conj k) [k v])
+                 (map? v) (find-key v ks matched-keys)
+                 :else (into {} (map #(find-key % ks matched-keys) v)))) identity data))
+
+(defn find-keys [data ks]
+  (let [matched-keys (atom [])]
+    (find-key data ks matched-keys)))
+
+
+(defn input-data>target-data
+  "Convert an input json file to an output json file based on specifications.
+
+  :data           INPUT data
+  :data-spec      Map to describe the INPUT data and the desired TARGET location of each key through `:dest` parameters
+  :target-shape   Map to describe the OUTPUT data format based on the `:dest` keyword placed in the `:spec-data`
+
+  If the :target-fmt has a placeholder that was not
+  fulfilled by the spec-data, it will return the placeholder
+  instead of the desired data at that place"
+  [data data-spec target-shape]
+  (let [parser (create-parser data-spec)
+        valid? (s/valid? parser data)]
+    (if-not valid?
+      (s/explain-data parser data)
+      (-> @pre-targets
+          (walk/postwalk-replace data)
+          (find-keys (vals @pre-targets))
+          (walk/postwalk-replace target-shape)))))
+
+
+(comment
+
+  (require '[clojure.java.io :as io])
+  ;; TODO: Remover o atom de pre-targets do codigo e gerar essa variavel de outra forma
+  ;; TODO: processo de post-walk está correto, porém vale a pena explorar edge cases com nomes duplicados e etc...
+
+  (def spec-escrita-por-PO {:spec-name ::testando
+                            :valor {:spec :teste
+                                    }
+                            :vals [{:spec :teste
+                                    :dest :l}]
+                            :valsb {:life {:casa {:spec :teste
+                                                  :dest :x}}}})
+
+  (def data-original {:valor 20
+                      :vals [20 30 40 50]
+                      :valsb {:life {:casa 99}}})
+
+  (def target-fmt-conhecido {:new-val :v
+                             })
+
+  (setup! (-> (io/resource "specs")
+              (io/file)
+              (file-seq)))
+
+  (def client-data {:zip ["101030-201", "987621-281"]
+                    :rent 980.322
+                    :university {:departments [{:zip {:address "University at Medium Inc.,"}}]}})
+
+  (def client-spec {:spec-name :my-project.client/payload
+                    :zip [{:spec :zipcode
+                           :optional? false
+                           :destination :zipcode
+                           :nullable? false}]
+
+                    :rent {:spec :money
+                           :optional? false
+                           :destination :value
+                           :nullable? false}
+
+                    :university {:departments [{:zip {:address {:spec :zipcode
+                                                                :destination :university-address
+                                                                :optional? false}}}]}})
+
+  (def target-fmt {:my-internal-zipcode :zipcode
+                   :my-internal-value   :value
+                   :my-internal-address :university-address})
+
+  (setup! (-> (io/resource "specs")
+              (io/file)
+              (file-seq)))
+
+  (input-data>target-data client-data client-spec target-fmt)
+
+  )

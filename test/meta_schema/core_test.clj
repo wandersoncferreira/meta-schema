@@ -46,13 +46,13 @@
                  (file-seq)))
   (let [file-spec {:spec-name :meta-schema.core-test/testing
                    :cep {:spec :zipcode}
-                   :amount {:spec :money}}
+                   :amounts [{:spec :money}]}
 
         parser (ms/create-parser file-spec)]
     (is (s/valid? parser {:cep "brazilian cep"
-                          :amount 20}))
+                          :amounts [20 320 40 50]}))
     (is (not (s/valid? parser {:cep 10
-                               :amount 20})))))
+                               :amounts 20})))))
 
 (deftest failing-specs
   (ms/setup! (-> (io/resource "specs")
