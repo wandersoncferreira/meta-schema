@@ -118,8 +118,8 @@ Cool, now we can finally finish the example above. Let's say your source code on
   (input-data>target-data client-data client-spec target-fmt)
 
   ;; => {:my-internal-zipcode ["101030-201" "987621-281"],
-         :my-internal-value 980.322,
-         :my-internal-address "University at Medium Inc.,"}
+  ;;     :my-internal-value 980.322,
+  ;;     :my-internal-address "University at Medium Inc.,"}
 ```
 
 ## Rationale
