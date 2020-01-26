@@ -87,7 +87,7 @@ Example of specification provided to the library at runtime.
 
 Cool, now we can finally finish the example above. Let's say your source code only understands a specific `target-fmt` of MAP that can be processed. For sure, your clients does not want to send you that format, right? Because they can't change legacy systems and make something better to help everybody. That's ok!
 
-```
+```clj
   (def client-data {:zip ["101030-201", "987621-281"]
                     :rent 980.322
                     :university {:departments [{:zip {:address "University at Medium Inc.,"}}]}})
