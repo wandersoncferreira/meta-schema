@@ -134,7 +134,7 @@ The DSL is simple:
 
 ## TODO list
 
-- [x] Finish the second part of the library, `input-fmt->target-fmt` conversions
+- [x] Finish the second part of the library, `input-data->target-data` conversions
 - [x] Improve interfaces of public API
 - [ ] Write a parser to spec the DSL in the input-file
 - [ ] Provide support for `sets` and `enums` (?)
