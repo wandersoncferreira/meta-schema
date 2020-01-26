@@ -68,7 +68,7 @@ about the content type of this files e.g. required keys `:intent` and
                                   ;; first level, already has a :spec keyword defining the data coercion
                                   (:spec node)
                                   (do
-                                    (swap! pre-targets assoc field-name (:dest node))
+                                    (swap! pre-targets assoc field-name (:destination node))
                                     (if (:nullable? node)
                                       (ds/maybe (get @available-specs (:spec node)))
                                       (get @available-specs (:spec node))))
@@ -76,7 +76,7 @@ about the content type of this files e.g. required keys `:intent` and
                                   ;; second level, we get a vector with a map containing :spec inside it.
                                   (and (vector? node) (:spec (first node)))
                                   (do
-                                    (swap! pre-targets assoc field-name (:dest (first node)))
+                                    (swap! pre-targets assoc field-name (:destination (first node)))
                                     (if (> (count node) 1)
                                       [(ds/or
                                         (->> (for [n node]
@@ -101,20 +101,38 @@ about the content type of this files e.g. required keys `:intent` and
       (ds/spec {:name spec-name
                 :spec spec-gen}))))
 
-(defn find-key [data ks]
-  (clojure.walk/walk (fn [[k v]]
-                       (if (contains? (set ks) k)
-                         [k v]
-                         (when (map? v)
-                           (find-key v ks)))) identity data))
+(defn- find-key [data ks matched-keys]
+  (walk/walk (fn [[k v]]
+               (cond
+                 (and (contains? (set ks) k) (not (contains? (set @matched-keys) k))) (do (swap! matched-keys conj k) [k v])
+                 (map? v) (find-key v ks matched-keys)
+                 :else (into {} (map #(find-key % ks matched-keys) v)))) identity data))
 
-(defn conv->target [data target]
-  (if (empty? @pre-targets)
-    (throw (ex-info "You need to create a parser first" {}))
-    (-> @pre-targets
-        (walk/postwalk-replace data)
-        (find-key (vals @pre-targets))
-        (walk/postwalk-replace target))))
+(defn find-keys [data ks]
+  (let [matched-keys (atom [])]
+    (find-key data ks matched-keys)))
+
+
+(defn input-data>target-data
+  "Convert an input json file to an output json file based on specifications.
+
+  :data           INPUT data
+  :data-spec      Map to describe the INPUT data and the desired TARGET location of each key through `:dest` parameters
+  :target-shape   Map to describe the OUTPUT data format based on the `:dest` keyword placed in the `:spec-data`
+
+  If the :target-fmt has a placeholder that was not
+  fulfilled by the spec-data, it will return the placeholder
+  instead of the desired data at that place"
+  [data data-spec target-shape]
+  (let [parser (create-parser data-spec)
+        valid? (s/valid? parser data)]
+    (if-not valid?
+      (s/explain-data parser data)
+      (-> @pre-targets
+          (walk/postwalk-replace data)
+          (find-keys (vals @pre-targets))
+          (walk/postwalk-replace target-shape)))))
+
 
 (comment
 
@@ -124,7 +142,7 @@ about the content type of this files e.g. required keys `:intent` and
 
   (def spec-escrita-por-PO {:spec-name ::testando
                             :valor {:spec :teste
-                                    :dest :v}
+                                    }
                             :vals [{:spec :teste
                                     :dest :l}]
                             :valsb {:life {:casa {:spec :teste
@@ -135,15 +153,39 @@ about the content type of this files e.g. required keys `:intent` and
                       :valsb {:life {:casa 99}}})
 
   (def target-fmt-conhecido {:new-val :v
-                             :new-casa :x
-                             :new-vals :l
-                             :wand {:trying {:to [:code :x]}}
-                             :new {:new-in :v}})
+                             })
 
   (setup! (-> (io/resource "specs")
               (io/file)
               (file-seq)))
-  (create-parser spec-escrita-por-PO)
-  (conv->target data-original target-fmt-conhecido)
+
+  (def client-data {:zip ["101030-201", "987621-281"]
+                    :rent 980.322
+                    :university {:departments [{:zip {:address "University at Medium Inc.,"}}]}})
+
+  (def client-spec {:spec-name :my-project.client/payload
+                    :zip [{:spec :zipcode
+                           :optional? false
+                           :destination :zipcode
+                           :nullable? false}]
+
+                    :rent {:spec :money
+                           :optional? false
+                           :destination :value
+                           :nullable? false}
+
+                    :university {:departments [{:zip {:address {:spec :zipcode
+                                                                :destination :university-address
+                                                                :optional? false}}}]}})
+
+  (def target-fmt {:my-internal-zipcode :zipcode
+                   :my-internal-value   :value
+                   :my-internal-address :university-address})
+
+  (setup! (-> (io/resource "specs")
+              (io/file)
+              (file-seq)))
+
+  (input-data>target-data client-data client-spec target-fmt)
 
   )

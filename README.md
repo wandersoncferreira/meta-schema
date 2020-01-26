@@ -9,19 +9,21 @@ Provide users the ability to combine several pre-defined
 `clojure.spec` into some specific shape at *runtime*.
 
 
-For now, it only supports JSON files.
+For now, it only supports JSON files. This library is in
+alpha-stage, still needs many test cases and refactors,
+although the Public API **must** not change.
 
 ## Installation
 
 Leiningen/Boot
 
 ```clj
-[meta-schema "0.1.1"]
+[meta-schema "0.1.2"]
 ```
 
 Clojure CLI/deps.edn
 ```clj
-meta-schema {:mvn/version "0.1.1"}
+meta-schema {:mvn/version "0.1.2"}
 ```
 
 ## Usage
@@ -83,7 +85,44 @@ Example of specification provided to the library at runtime.
 
 ```
 
-## Rational
+Cool, now we can finally finish the example above. Let's say your source code only understands a specific `target-fmt` of MAP that can be processed. For sure, your clients does not want to send you that format, right? Because they can't change legacy systems and make something better to help everybody. That's ok!
+
+```
+  (def client-data {:zip ["101030-201", "987621-281"]
+                    :rent 980.322
+                    :university {:departments [{:zip {:address "University at Medium Inc.,"}}]}})
+
+  (def client-spec {:spec-name :my-project.client/payload
+                    :zip [{:spec :zipcode
+                           :optional? false
+                           :destination :zipcode
+                           :nullable? false}]
+
+                    :rent {:spec :money
+                           :optional? false
+                           :destination :value
+                           :nullable? false}
+
+                    :university {:departments [{:zip {:address {:spec :zipcode
+                                                                :destination :university-address
+                                                                :optional? false}}}]}})
+
+  (def target-fmt {:my-internal-zipcode :zipcode
+                   :my-internal-value   :value
+                   :my-internal-address :university-address})
+
+  (setup! (-> (io/resource "specs")
+              (io/file)
+              (file-seq)))
+
+  (input-data>target-data client-data client-spec target-fmt)
+
+  ;; => {:my-internal-zipcode ["101030-201" "987621-281"],
+         :my-internal-value 980.322,
+         :my-internal-address "University at Medium Inc.,"}
+```
+
+## Rationale
 
 The DSL is simple:
 
@@ -96,7 +135,8 @@ The DSL is simple:
 
 ## TODO list
 
-- [ ] Improve interfaces of public API
+- [x] Finish the second part of the library, `input-fmt->target-fmt` conversions
+- [x] Improve interfaces of public API
 - [ ] Write a parser to spec the DSL in the input-file
 - [ ] Provide support for `sets` and `enums` (?)
 - [ ] Extend it to XML
