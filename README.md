@@ -18,12 +18,12 @@ although the Public API **must** not change.
 Leiningen/Boot
 
 ```clj
-[meta-schema "0.1.2"]
+[meta-schema "0.1.3"]
 ```
 
 Clojure CLI/deps.edn
 ```clj
-meta-schema {:mvn/version "0.1.2"}
+meta-schema {:mvn/version "0.1.3"}
 ```
 
 ## Usage
