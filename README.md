@@ -94,18 +94,13 @@ Cool, now we can finally finish the example above. Let's say your source code on
 
   (def client-spec {:spec-name :my-project.client/payload
                     :zip [{:spec :zipcode
-                           :optional? false
-                           :destination :zipcode
-                           :nullable? false}]
+                           :destination :zipcode}]
 
                     :rent {:spec :money
-                           :optional? false
-                           :destination :value
-                           :nullable? false}
+                           :destination :value}
 
                     :university {:departments [{:zip {:address {:spec :zipcode
-                                                                :destination :university-address
-                                                                :optional? false}}}]}})
+                                                                :destination :university-address}}}]}})
 
   (def target-fmt {:my-internal-zipcode :zipcode
                    :my-internal-value   :value
