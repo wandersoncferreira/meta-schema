@@ -49,7 +49,7 @@ about the content type of this files e.g. required keys `:intent` and
        (map name)
        (cstr/join "-")))
 
-(def pre-targets (atom {}))
+(def ^:private pre-targets (atom {}))
 
 (defn- traverse-file-spec
   ([spec]
@@ -108,7 +108,7 @@ about the content type of this files e.g. required keys `:intent` and
                  (map? v) (find-key v ks matched-keys)
                  :else (into {} (map #(find-key % ks matched-keys) v)))) identity data))
 
-(defn find-keys [data ks]
+(defn- find-keys [data ks]
   (let [matched-keys (atom [])]
     (find-key data ks matched-keys)))
 
