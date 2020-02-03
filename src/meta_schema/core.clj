@@ -11,9 +11,10 @@
   "All the available specs loaded by the system through the `setup!` function."
   (atom {}))
 
-(defn- load-specs [filename]
+(defn- load-specs
   "If the file is not complaint with the usage of `:intent` and `:location`
-a exception will be raised."
+  a exception will be raised."
+  [filename]
   (let [single-spec (->> filename
                          slurp
                          edn/read-string)]
@@ -23,13 +24,14 @@ a exception will be raised."
              (hash-map k (get-in single-spec [k :location]))))
          (into {}))))
 
-(defn setup! [files]
+(defn setup!
   "Perform the configuration of your pre-defined specs.
 
   :files   a list of java.io.File objects with the definitions
-of your pre-defined specs. You should follow the specified documentation
-about the content type of this files e.g. required keys `:intent` and
-`:location`."
+  of your pre-defined specs. You should follow the specified documentation
+  about the content type of this files e.g. required keys `:intent` and
+  `:location`."
+  [files]
   (let [definitions (->> files
                          (filter #(.isFile %))
                          (map load-specs)
@@ -49,7 +51,7 @@ about the content type of this files e.g. required keys `:intent` and
        (map name)
        (cstr/join "-")))
 
-(def pre-targets (atom {}))
+(def ^:private pre-targets (atom {}))
 
 (defn- traverse-file-spec
   ([spec]
@@ -108,7 +110,7 @@ about the content type of this files e.g. required keys `:intent` and
                  (map? v) (find-key v ks matched-keys)
                  :else (into {} (map #(find-key % ks matched-keys) v)))) identity data))
 
-(defn find-keys [data ks]
+(defn- find-keys [data ks]
   (let [matched-keys (atom [])]
     (find-key data ks matched-keys)))
 
