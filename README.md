@@ -1,4 +1,4 @@
-# meta-schema [![Coverage Status](https://coveralls.io/repos/github/wandersoncferreira/meta-schema/badge.svg?branch=feature/setup-travis)](https://coveralls.io/github/wandersoncferreira/meta-schema?branch=feature/setup-travis)
+# meta-schema [![Build Status](https://travis-ci.org/wandersoncferreira/meta-schema.svg?branch=master)](https://travis-ci.org/wandersoncferreira/meta-schema) [![Coverage Status](https://coveralls.io/repos/github/wandersoncferreira/meta-schema/badge.svg?branch=feature/setup-travis)](https://coveralls.io/github/wandersoncferreira/meta-schema?branch=feature/setup-travis)
 
 [![Clojars Project](https://img.shields.io/clojars/v/meta-schema.svg)](https://clojars.org/meta-schema)
 
