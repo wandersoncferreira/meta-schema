@@ -1,9 +1,9 @@
 {:zipcode {:intent "Validation to ZipCodes in Brazil"
-           :location :meta-schema.core-test/zipcode}
+           :location :meta-schema.definitions/zipcode}
  :money {:intent "How we understand money around here? Anything >= 0 either long, float, double, or decimal"
-         :location :meta-schema.core-test/money}
+         :location :meta-schema.definitions/money}
  :address {:intent "Where do I live?"
-           :location :meta-schema.core-test/address}
+           :location :meta-schema.definitions/address}
  :life {:intent "Who knows?"
-        :location :meta-schema.core-test/life}
+        :location :meta-schema.definitions/life}
  }
