@@ -1,7 +1,8 @@
 (ns meta-schema.reshape-data-test
   (:require  [clojure.test :refer [deftest is testing]]
              [meta-schema.core :as ms]
-             [clojure.java.io :as io]))
+             [clojure.java.io :as io]
+             [meta-schema.definitions :refer :all]))
 
 (deftest simple-reshape
   (let [client-data {:zip ["101030-201", "987621-281"]
