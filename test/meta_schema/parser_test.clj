@@ -1,6 +1,7 @@
-(ns meta-schema.core-test
+(ns meta-schema.parser-test
   (:require [clojure.test :refer :all]
             [meta-schema.core :as ms]
+            [spec-tools.core :as sc]
             [clojure.java.io :as io]
             [clojure.spec.alpha :as s]
             [clojure.test.check.generators :as gen]
@@ -28,8 +29,6 @@
                     :spec-name gen/keyword-ns
                     :tk1 (gen/not-empty (gen/vector leaf-spec))
                     :tk2 leaf-spec))
-
-(gen/sample spec-file-gen 2)
 
 
 (s/def ::money (s/or :int int?
@@ -74,4 +73,4 @@
                 (ms/setup! (-> (io/resource "specs")
                                (io/file)
                                (file-seq)))
-                (= (spec-tools.core/spec? (ms/create-parser file-spec)))))
+                (= (sc/spec? (ms/create-parser file-spec)))))
